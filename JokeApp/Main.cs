@@ -11,6 +11,8 @@ namespace JokeApp
         public static void Run([TimerTrigger("0 */1 * * * *")]TimerInfo myTimer, ILogger log)
         {
             log.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
+            APIController JokeAPI = new APIController();
+            log.LogInformation($"API URL is: {JokeAPI.APIURL}");
         }
     }
 }
