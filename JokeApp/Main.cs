@@ -10,11 +10,11 @@ namespace JokeApp
     public static class Main
     {
         [FunctionName("Main")]
-        public static void Run([TimerTrigger("0 */1 * * * *")]TimerInfo myTimer, ILogger log)
+        public static void Run([TimerTrigger("0 0 9 * * *")]TimerInfo myTimer, ILogger log)
         {
             log.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
             APIController JokeAPI = new APIController();
-            log.LogInformation($"API URL is: {JokeAPI.APIURL}");
+            // log.LogInformation($"API URL is: {JokeAPI.APIURL}");
 
             var joke = new Joke();
             Boolean acceptedJoke = false;
@@ -56,6 +56,10 @@ namespace JokeApp
                     // Definerer spørringen vår for insertion og kjører denne
                     con.Execute("insert into Jokes (Id, JokeType, Setup, Punchline) values(@Id, @Type, @Setup, @Punchline)",
                         joke);
+                    log.LogInformation($"A new joke has been added to the database!");
+                } else
+                {
+                    log.LogInformation($"The joke of the day already existed in database and was not added.");
                 }
             }
         }
