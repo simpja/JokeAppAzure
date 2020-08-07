@@ -4,8 +4,6 @@ using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Logging;
 using System.Data.SqlClient;
 using Dapper;
-using System.Configuration;
-using System.Collections.Generic;
 
 namespace JokeApp
 {
@@ -50,18 +48,10 @@ namespace JokeApp
             {
                 con.Open();
 
-                // Get all jokes that have the current jokeId
-                IEnumerable<Joke> jokes = con.Query<Joke>("SELECT * FROM dbo.Jokes WHERE Id = @Id", joke);
-
-                // Count how many were returned from the API
-                int countJokes = 0;
-                foreach (Joke j in jokes)
-                {
-                    countJokes++;
-                }
+                var exists = con.ExecuteScalar<bool>("select count(distinct 1) from Jokes where Id=@id", joke);
 
                 // If any jokes with the same jokeId existed in the API, we don't insert anything
-                if (countJokes == 0)
+                if (!exists)
                 {
                     // Definerer spørringen vår for insertion og kjører denne
                     con.Execute("insert into Jokes (Id, JokeType, Setup, Punchline) values(@Id, @Type, @Setup, @Punchline)",
