@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using System.Data.SqlClient;
 using Dapper;
 using System.Configuration;
+using System.Collections.Generic;
 
 namespace JokeApp
 {
@@ -21,12 +22,19 @@ namespace JokeApp
             Boolean acceptedJoke = false;
             int retries = 0;
             int maxRetry = 10;
-            while (!acceptedJoke && retries < maxRetry)
+            while (!acceptedJoke)
             {
                 // Kjør metoden for å gjøre spørring til APIet
                 // JokeAPI.GETRandomJoke();
                 joke = JokeAPI.GETRandomJoke();
                 acceptedJoke = joke.validateJoke();
+
+                if (retries >= maxRetry)
+                {
+                    // Hvis vi bruker mer enn maxRetry forsøk på å finne en godkjent vits avslutter vi kjøringen
+                    log.LogInformation($"After {maxRetry} subsequent tries, function couldn't retrieve a joke that passed validation.");
+                    return;
+                }
             }
             
             // Logger ut vitsen til konsoll:
@@ -42,9 +50,23 @@ namespace JokeApp
             {
                 con.Open();
 
-                // Definerer spørringen vår og kjører denne
-                con.Execute("insert into Jokes (Id, JokeType, Setup, Punchline) values(@Id, @Type, @Setup, @Punchline)",
-                    joke);
+                // Get all jokes that have the current jokeId
+                IEnumerable<Joke> jokes = con.Query<Joke>("SELECT * FROM dbo.Jokes WHERE Id = @Id", joke);
+
+                // Count how many were returned from the API
+                int countJokes = 0;
+                foreach (Joke j in jokes)
+                {
+                    countJokes++;
+                }
+
+                // If any jokes with the same jokeId existed in the API, we don't insert anything
+                if (countJokes == 0)
+                {
+                    // Definerer spørringen vår for insertion og kjører denne
+                    con.Execute("insert into Jokes (Id, JokeType, Setup, Punchline) values(@Id, @Type, @Setup, @Punchline)",
+                        joke);
+                }
             }
         }
     }
