@@ -4,6 +4,7 @@ using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Logging;
 using System.Data.SqlClient;
 using Dapper;
+using System.Configuration;
 
 namespace JokeApp
 {
@@ -33,13 +34,8 @@ namespace JokeApp
             log.LogInformation($"{joke.Setup}");
             log.LogInformation($"{joke.Punchline}");
 
-            // Vi henter connecitonString til databasen fra miljøvariabler
-            string connectionString = System.Environment.GetEnvironmentVariable($"ConnectionStrings:{"SQLConnectionString"}");
-
-            int Id = joke.Id;
-            string JokeType = joke.Type;
-            string Setup = joke.Setup;
-            string Punchline = joke.Punchline;
+            // Vi henter connectionString til databasen fra miljøvariabler
+            string connectionString = System.Environment.GetEnvironmentVariable("SQLConnectionString", EnvironmentVariableTarget.Process);
 
             // Oppretter tilkobling til databasen vha. System.Data.SqlClient og åpner denne
             using (var con = new SqlConnection(connectionString))
@@ -47,8 +43,8 @@ namespace JokeApp
                 con.Open();
 
                 // Definerer spørringen vår og kjører denne
-                con.Execute("insert into Jokes (Id, JokeType, Setup, Punchline) values(@Id, @JokeType, @Setup, @Punchline)",
-                    new { Id, JokeType, Setup, Punchline });
+                con.Execute("insert into Jokes (Id, JokeType, Setup, Punchline) values(@Id, @Type, @Setup, @Punchline)",
+                    joke);
             }
         }
     }
